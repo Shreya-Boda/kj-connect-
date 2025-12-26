@@ -9,7 +9,8 @@
     <span class="pill">Visible to all roles</span>
 </div>
 
-<form enctype="multipart/form-data" onsubmit="return handleNotice(event)">
+<form onsubmit="postNotice(event)">
+
     <input type="text" id="posterName" placeholder="Admin Name" required>
 
     <input type="text" id="noticeTitle" placeholder="Notice Title" required>
@@ -107,9 +108,48 @@
 </div>
 
 <script>
-function handleNotice(event) {
+function getMultiSelectValues(selectId) {
+    const select = document.getElementById(selectId);
+    return Array.from(select.selectedOptions).map(opt => opt.value);
+}
+
+async function postNotice(event) {
     event.preventDefault();
-    alert("Notice drafted. In production, save and broadcast to relevant filters with seen tracking.");
-    return false;
+
+    const postedBy = document.getElementById("posterName").value;
+    const title = document.getElementById("noticeTitle").value;
+    const content = document.getElementById("noticeContent").value;
+
+    const departments = getMultiSelectValues("department");
+    const years = getMultiSelectValues("year");
+
+    if (!postedBy || !title || !content) {
+        alert("All required fields must be filled");
+        return;
+    }
+
+    const data = {
+        postedBy,
+        title,
+        content,
+        departments: departments.length ? departments : ["All"],
+        years: years.length ? years : ["All"],
+        seenBy: []
+    };
+
+    const res = await fetch("http://localhost:5000/api/notices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+        alert("Notice posted successfully");
+        event.target.reset();
+    } else {
+        alert("Failed to post notice");
+    }
 }
 </script>
+
+
